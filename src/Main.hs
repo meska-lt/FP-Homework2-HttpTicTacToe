@@ -5,9 +5,9 @@ programStartMessage = "Programa darbą pradėjo."
 
 programFinishMessage :: Bool -> String
 programFinishMessage success =
-	if success
-	then "Programa darbą baigė sėkmingai."
-	else "Programa darbą baigė nesėkmingai."
+    if success
+    then "Programa darbą baigė sėkmingai."
+    else "Programa darbą baigė nesėkmingai."
 
 printStartMessage :: IO ()
 printStartMessage = putStrLn programStartMessage
@@ -17,5 +17,5 @@ printFinishMessage = putStrLn (programFinishMessage True)
 
 main :: IO ()
 main = do
-	printStartMessage
-	printFinishMessage
+    printStartMessage
+    printFinishMessage
