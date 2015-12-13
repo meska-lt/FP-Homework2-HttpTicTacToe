@@ -5,6 +5,8 @@ import Network.HTTP
 import Network.TCP
 import Network.URI
 
+import Parser
+
 programStartMessage :: String
 programStartMessage = "Programa darbą pradėjo."
 
@@ -39,16 +41,17 @@ postRequestWithIdAndState :: String -> String -> Request String
 postRequestWithIdAndState gameId gameState = Request {
   rqURI = (updateUriWithGameId gameId) :: URI,
   rqMethod = POST :: RequestMethod,
-  rqHeaders = [Header HdrContentType "application/json+list"] :: [Header],
+  rqHeaders = [Header HdrContentType "application/json+list", Header HdrContentLength (show (length gameState) :: String)] :: [Header],
   rqBody = gameState
 }
-
 
 executeNetworkingWithId :: String -> IO ()
 executeNetworkingWithId gameId = do
   putStrLn ("Zaidimo id: " ++ gameId)
   connection <- openStream "tictactoe.homedir.eu" 80
-  rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId "")
+  let serial = serializeBoard $ concat $ randomMove emptyBoard X 0 :: String
+  putStrLn ("Serialized: " ++ serial)
+  rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId serial)
   body <- getResponseBody rawResponse
   print body
   printFinishMessage True
