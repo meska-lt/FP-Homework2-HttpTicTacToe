@@ -10,7 +10,7 @@ name:                httt
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.1.0.0
+version:             0.2.1.0
 
 -- A short (one-line) description of the package.
 synopsis:            Functional programming homework #2: TicTacToe over HTTP
@@ -60,7 +60,7 @@ executable httt
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.8 && <4.9
+  build-depends:       HTTP, network-uri, base >=4.8 && <4.9
   
   -- Directories containing source files.
   hs-source-dirs:      src
