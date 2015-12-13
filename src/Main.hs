@@ -12,10 +12,25 @@ programFinishMessage success =
 printStartMessage :: IO ()
 printStartMessage = putStrLn programStartMessage
 
-printFinishMessage :: IO ()
-printFinishMessage = putStrLn (programFinishMessage True)
+printFinishMessage :: Bool -> IO ()
+printFinishMessage success = putStrLn (programFinishMessage success)
+
+gameId :: String
+gameId = "test1"
+
+startNetworkingWithStartParams :: IO ()
+startNetworkingWithStartParams = do
+  params <- getArgs
+  case params of
+    [aString] -> do
+      putStrLn ("Zaidimo id: " ++ aString)
+      printFinishMessage True
+    _ -> do
+      name <- getProgName
+      putStrLn ("Usage: " ++ name ++ " <string>")
+      printFinishMessage False
 
 main :: IO ()
 main = do
     printStartMessage
-    printFinishMessage
+    startNetworkingWithStartParams
