@@ -1,4 +1,9 @@
+module Main where
+
 import System.Environment
+import Network.HTTP
+import Network.TCP
+import Network.URI
 
 programStartMessage :: String
 programStartMessage = "Programa darbą pradėjo."
@@ -15,20 +20,38 @@ printStartMessage = putStrLn programStartMessage
 printFinishMessage :: Bool -> IO ()
 printFinishMessage success = putStrLn (programFinishMessage success)
 
-gameId :: String
-gameId = "test1"
-
 startNetworkingWithStartParams :: IO ()
 startNetworkingWithStartParams = do
   params <- getArgs
   case params of
     [aString] -> do
-      putStrLn ("Zaidimo id: " ++ aString)
-      printFinishMessage True
+      executeNetworkingWithId aString
     _ -> do
       name <- getProgName
       putStrLn ("Usage: " ++ name ++ " <string>")
       printFinishMessage False
+
+updateUriWithGameId :: String -> URI
+updateUriWithGameId id = case parseURI ("http://tictactoe.homedir.eu/game/" ++ id ++ "/player/1") of
+  Just url -> url
+
+postRequestWithIdAndState :: String -> String -> Request String
+postRequestWithIdAndState gameId gameState = Request {
+  rqURI = (updateUriWithGameId gameId) :: URI,
+  rqMethod = POST :: RequestMethod,
+  rqHeaders = [Header HdrContentType "application/json+list"] :: [Header],
+  rqBody = gameState
+}
+
+
+executeNetworkingWithId :: String -> IO ()
+executeNetworkingWithId gameId = do
+  putStrLn ("Zaidimo id: " ++ gameId)
+  connection <- openStream "tictactoe.homedir.eu" 80
+  rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId "")
+  body <- getResponseBody rawResponse
+  print body
+  printFinishMessage True
 
 main :: IO ()
 main = do
