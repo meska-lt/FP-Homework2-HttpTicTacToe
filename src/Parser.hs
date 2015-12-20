@@ -9,16 +9,15 @@ boardEdgeLength :: Int
 boardEdgeLength = 3
 
 data Player = X | O deriving (Show, Read, Eq)
+type Marking = Maybe Player
 type Position = (Int, Int)
 type Board = [[Maybe Player]]
 
 strToPlayer :: String -> Player
-strToPlayer "+" = X
 strToPlayer "x" = X
 strToPlayer "X" = X
 strToPlayer "o" = O
 strToPlayer "O" = O
-strToPlayer "0" = O
 
 playerToStr :: Maybe Player -> String
 playerToStr player =
@@ -29,7 +28,7 @@ playerToStr player =
 emptyBoard :: Board
 emptyBoard = replicate boardEdgeLength $ replicate boardEdgeLength Nothing
 
-replaceNth :: Int -> Maybe Player -> [Maybe Player] -> [Maybe Player]
+replaceNth :: Int -> Marking -> [Marking] -> [Marking]
 replaceNth n newVal (head:tail)
      | n == 0 = newVal:tail
      | otherwise = head:replaceNth (n-1) newVal tail
@@ -85,11 +84,11 @@ parseMaps (head:tail) acc =
 parseSExpr :: String -> [InternalMap]
 parseSExpr str =
     let
-        listContent = trimElem str "(m " ")" "Not a list."
+        listContent = trimElem str "(m " ")" "Not a map."
         parsedData = parseMaps (parseList listContent []) []
     in parsedData
 
-fillTheGrid :: [InternalMap] -> [Maybe Player] -> Board
+fillTheGrid :: [InternalMap] -> [Marking] -> Board
 fillTheGrid [] grid = chunksOf boardEdgeLength grid
 fillTheGrid (x:xs) grid =
     let
@@ -100,36 +99,36 @@ fillTheGrid (x:xs) grid =
         newGrid = replaceNth index (Just (strToPlayer player)) grid
     in fillTheGrid xs newGrid
 
-getWinSeqs :: Board -> [[Maybe Player]]
+getWinSeqs :: Board -> [[Marking]]
 getWinSeqs grid = horizontal ++ vertical ++ [fDiag, bDiag]
   where horizontal = grid
         vertical = transpose grid
         fDiag = zipWith (!!) (reverse grid) [0..]
         bDiag = zipWith (!!) grid [0..]
 
-getWinner :: String -> String
+getWinner :: String -> Maybe Char
 getWinner map
-    | winner X  = "Winner: X"
-    | winner O  = "Winner: O"
-    | otherwise = "Winner: there is none"
+    | winner X  = Just 'x'
+    | winner O  = Just 'o'
+    | otherwise = Nothing
     where
         grid = fillTheGrid (parseSExpr map) (concat emptyBoard)
         winner :: Player -> Bool
         winner player = any (all (== Just player)) $ getWinSeqs grid
 
 serializeMapContents :: [Maybe Player] -> Int -> [String] -> [String]
-serializeMapContents [] n moves = moves
-serializeMapContents (x:xs) n moves =
-    if x /= Nothing then let
-        (xVal,yVal) = (divMod n 3)
-        currentMove = "{\"x\":" ++ (show xVal) ++ ", \"y\":" ++ (show yVal) ++ ", \"v\":\"" ++ (playerToStr x) ++ "\"}"
-    in serializeMapContents xs (n+1) (currentMove:moves)
-    else serializeMapContents xs (n+1) moves
+serializeMapContents [] moveNumber serializedPart = serializedPart
+serializeMapContents (head:tail) moveNumber serializedPart =
+    if head /= Nothing then let
+        (xVal, yVal) = (divMod moveNumber 3)
+        str = "\"" ++ (show moveNumber) ++ "\" " ++ "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr head) ++ "\")"
+    in serializeMapContents tail (moveNumber+1) (str:serializedPart)
+    else serializeMapContents tail (moveNumber) serializedPart
 
 serializeBoard :: [Maybe Player] -> String
 serializeBoard board =
-  let listContent = intercalate ", " (reverse $ serializeMapContents board 0 [])
-  in "[" ++ listContent ++ "]"
+  let listContent = intercalate " " (reverse $ serializeMapContents board 0 [])
+  in "(m " ++ listContent ++ ")"
 
 shuffle :: Int -> Int -> [a] -> [a]
 shuffle seed 0   _  = []
