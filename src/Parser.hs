@@ -13,10 +13,12 @@ type Position = (Int, Int)
 type Board = [[Maybe Player]]
 
 strToPlayer :: String -> Player
+strToPlayer "+" = X
 strToPlayer "x" = X
 strToPlayer "X" = X
 strToPlayer "o" = O
 strToPlayer "O" = O
+strToPlayer "0" = O
 
 playerToStr :: Maybe Player -> String
 playerToStr player =
@@ -120,14 +122,14 @@ serializeMapContents [] n moves = moves
 serializeMapContents (x:xs) n moves =
     if x /= Nothing then let
         (xVal,yVal) = (divMod n 3)
-        currentMove = "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr x) ++ "\")"
+        currentMove = "{\"x\":" ++ (show xVal) ++ ", \"y\":" ++ (show yVal) ++ ", \"v\":\"" ++ (playerToStr x) ++ "\"}"
     in serializeMapContents xs (n+1) (currentMove:moves)
     else serializeMapContents xs (n+1) moves
 
 serializeBoard :: [Maybe Player] -> String
 serializeBoard board =
-  let listContent = intercalate " " (reverse $ serializeMapContents board 0 [])
-  in "(l " ++ listContent ++ ")"
+  let listContent = intercalate ", " (reverse $ serializeMapContents board 0 [])
+  in "[" ++ listContent ++ "]"
 
 shuffle :: Int -> Int -> [a] -> [a]
 shuffle seed 0   _  = []
