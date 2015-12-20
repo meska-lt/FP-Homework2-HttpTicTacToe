@@ -45,16 +45,27 @@ postRequestWithIdAndState gameId gameState = Request {
   rqBody = gameState
 }
 
+getRequestWithIdAndState :: String -> String -> Request String
+getRequestWithIdAndState gameId gameState = Request {
+  rqURI = (updateUriWithGameId gameId) :: URI,
+  rqMethod = GET :: RequestMethod,
+  rqHeaders = [Header HdrAccept "application/s-expr+map"] :: [Header],
+  rqBody = ""
+}
+
 executeNetworkingWithId :: String -> IO ()
 executeNetworkingWithId gameId = do
   putStrLn ("Zaidimo id: " ++ gameId)
   connection <- openStream "tictactoe.homedir.eu" 80
   let serial = serializeBoard $ concat $ randomMove emptyBoard X 0 :: String
-  putStrLn ("Serialized: " ++ serial)
+  putStrLn ("Sent: " ++ serial)
   rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId serial)
   body <- getResponseBody rawResponse
-  print body
-  printFinishMessage True
+  let serial = (serializeBoard $ concat $ emptyBoard) :: String
+  rawResponse <- sendHTTP connection (getRequestWithIdAndState gameId serial)
+  body <- getResponseBody rawResponse
+  putStrLn ("Received: " ++ body)
+  putStrLn(show $ getWinner body)
 
 main :: IO ()
 main = do
