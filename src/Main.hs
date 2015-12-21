@@ -69,12 +69,18 @@ makeMoveViaConnection connection gameId gameState round move =
                 rawResponse <- sendHTTP connection (getRequestWithIdAndState gameId serial)
                 body <- getResponseBody rawResponse
                 putStrLn ("GET Received: " ++ body)
+                if ((move < 9) && (getWinner body == Nothing))
+                    then makeMoveViaConnection connection gameId body round (move + 1)
+                    else return()
         else if (mod move 2) == 0
             then do
                     putStrLn ("POST Sent: " ++ gameState)
                     rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId gameState)
                     body <- getResponseBody rawResponse
                     putStrLn ("POST Received: " ++ body)
+                    if ((move < 9) && (getWinner gameState == Nothing))
+                        then makeMoveViaConnection connection gameId gameState round (move + 1)
+                        else return()
             else return()
 
 main :: IO ()
