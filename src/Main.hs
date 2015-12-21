@@ -58,14 +58,24 @@ executeNetworkingWithId gameId = do
   putStrLn ("Zaidimo id: " ++ gameId)
   connection <- openStream "tictactoe.homedir.eu" 80
   let serial = serializeBoard $ concat $ randomMove emptyBoard X 0 :: String
-  putStrLn ("Sent: " ++ serial)
-  rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId serial)
-  body <- getResponseBody rawResponse
-  let serial = (serializeBoard $ concat $ emptyBoard) :: String
-  rawResponse <- sendHTTP connection (getRequestWithIdAndState gameId serial)
-  body <- getResponseBody rawResponse
-  putStrLn ("Received: " ++ body)
-  putStrLn(show $ getWinner body)
+  makeMoveViaConnection connection gameId serial 0 0
+  makeMoveViaConnection connection gameId serial 0 1
+
+makeMoveViaConnection :: HandleStream String -> String -> String -> Int -> Int -> IO ()
+makeMoveViaConnection connection gameId gameState round move =
+    if (mod move 2) == 1
+        then do
+                let serial = ""
+                rawResponse <- sendHTTP connection (getRequestWithIdAndState gameId serial)
+                body <- getResponseBody rawResponse
+                putStrLn ("GET Received: " ++ body)
+        else if (mod move 2) == 0
+            then do
+                    putStrLn ("POST Sent: " ++ gameState)
+                    rawResponse <- sendHTTP connection (postRequestWithIdAndState gameId gameState)
+                    body <- getResponseBody rawResponse
+                    putStrLn ("POST Received: " ++ body)
+            else return()
 
 main :: IO ()
 main = do
