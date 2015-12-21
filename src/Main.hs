@@ -37,7 +37,7 @@ startNetworkingWithStartParams = do
       printFinishMessage False
 
 updateUriWithGameId :: String -> URI
-updateUriWithGameId id = case parseURI ("http://tictactoe.homedir.eu/game/" ++ id ++ "/player/1") of
+updateUriWithGameId id = case parseURI ("http://tictactoe.homedir.eu/game/" ++ id ++ "/player/2") of
   Just url -> url
 
 postRequestWithIdAndState :: String -> String -> Request String
@@ -64,7 +64,7 @@ executeNetworkingWithId gameId = do
 
 makeMoveViaConnection :: HandleStream String -> String -> String -> Int -> Int -> IO ()
 makeMoveViaConnection connection gameId gameState round move =
-    if (mod move 2) == 1
+    if (mod move 2) == 0
         then do
                 let serial = ""
                 rawResponse <- sendHTTP connection (getRequestWithIdAndState (gameId ++ (show round)) serial)
@@ -76,7 +76,7 @@ makeMoveViaConnection connection gameId gameState round move =
                             let nextMove = serializeBoard $ concat $ predefinedMove receivedState (move + 1)
                             makeMoveViaConnection connection gameId nextMove round (move + 1)
                     else makeRoundViaConnection connection gameId (round + 1)
-        else if (mod move 2) == 0
+        else if (mod move 2) == 1
             then do
                     putStrLn ("POST Sent: " ++ gameState)
                     rawResponse <- sendHTTP connection (postRequestWithIdAndState (gameId ++ (show round)) gameState)
