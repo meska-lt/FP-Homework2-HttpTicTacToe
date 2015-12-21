@@ -8,7 +8,7 @@ import Network.URI
 import Parser
 
 maxRoundAmount :: Int
-maxRoundAmount = 10
+maxRoundAmount = 1
 
 programStartMessage :: String
 programStartMessage = "Programa darbą pradėjo."
@@ -71,7 +71,10 @@ makeMoveViaConnection connection gameId gameState round move =
                 body <- getResponseBody rawResponse
                 putStrLn ("GET Received: " ++ body)
                 if ((move < 9) && (getWinner body == Nothing))
-                    then makeMoveViaConnection connection gameId body round (move + 1)
+                    then do
+                            let receivedState = fillTheGrid (parseSExpr body) (concat emptyBoard)
+                            let nextMove = serializeBoard $ concat $ predefinedMove receivedState (move + 1)
+                            makeMoveViaConnection connection gameId nextMove round (move + 1)
                     else makeRoundViaConnection connection gameId (round + 1)
         else if (mod move 2) == 0
             then do
@@ -80,7 +83,10 @@ makeMoveViaConnection connection gameId gameState round move =
                     body <- getResponseBody rawResponse
                     putStrLn ("POST Received: " ++ body)
                     if ((move < 9) && (getWinner gameState == Nothing))
-                        then makeMoveViaConnection connection gameId gameState round (move + 1)
+                        then  do
+                            let sentState = fillTheGrid (parseSExpr body) (concat emptyBoard)
+                            let nextMove = serializeBoard $ concat $ predefinedMove sentState (move + 1)
+                            makeMoveViaConnection connection gameId nextMove round (move + 1)
                         else makeRoundViaConnection connection gameId (round + 1)
             else return()
 
@@ -88,7 +94,7 @@ makeRoundViaConnection :: HandleStream String -> String  -> Int -> IO ()
 makeRoundViaConnection connection gameId round =
     if round < maxRoundAmount
         then do
-                let serial = serializeBoard $ concat $ randomMove emptyBoard X 0 :: String
+                let serial = serializeBoard $ concat $ predefinedMove emptyBoard 0 :: String
                 makeMoveViaConnection connection gameId serial round 0
         else printFinishMessage True
 
