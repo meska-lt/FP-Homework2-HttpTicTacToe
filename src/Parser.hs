@@ -116,40 +116,30 @@ getWinner map
         winner :: Player -> Bool
         winner player = any (all (== Just player)) $ getWinSeqs grid
 
-serializeMapContents :: [Maybe Player] -> Int -> [String] -> [String]
-serializeMapContents [] moveNumber serializedPart = serializedPart
-serializeMapContents (head:tail) moveNumber serializedPart =
+serializeMapContents :: [Maybe Player] -> Int -> Int -> [String] -> [String]
+serializeMapContents [] moveId moveNumber serializedPart = serializedPart
+serializeMapContents (head:tail)  moveId moveNumber serializedPart =
     if head /= Nothing then let
-        (xVal, yVal) = (divMod moveNumber 3)
-        str = "\"" ++ (show moveNumber) ++ "\" " ++ "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr head) ++ "\")"
-    in serializeMapContents tail (moveNumber+1) (str:serializedPart)
-    else serializeMapContents tail (moveNumber) serializedPart
+        yVal = moveNumber `mod` boardEdgeLength
+        xVal = (moveNumber - yVal) `div` boardEdgeLength
+        str = "\"" ++ (show  moveId) ++ "\" " ++ "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr head) ++ "\")"
+    in serializeMapContents tail (moveId + 1) (moveNumber + 1) (str:serializedPart)
+    else serializeMapContents tail (moveId) (moveNumber + 1) serializedPart
 
 serializeBoard :: [Maybe Player] -> String
 serializeBoard board =
-  let listContent = intercalate " " (reverse $ serializeMapContents board 0 [])
+  let listContent = intercalate " " (reverse $ serializeMapContents board 0 0 [])
   in "(m " ++ listContent ++ ")"
 
-shuffle :: Int -> Int -> [a] -> [a]
-shuffle seed 0   _  = []
-shuffle seed len xs = 
-        let
-                n = fst $ randomR (0, len - 1) (mkStdGen seed)
-                (y, ys) =  choose n xs
-                ys' = shuffle seed (len - 1) ys
-        in y:ys'
-
-choose _ [] = error "choose: index out of range"
-choose 0 (x:xs) = (x, xs)
-choose i (x:xs) = let (y, ys) = choose (i - 1) xs in (y, x:ys)
-
-randomMove :: Board -> Player -> Int -> Board
-randomMove board player seed = 
-    let
-        concatenatedBoard = concat board
-        list = findIndices (==Nothing) concatenatedBoard
-        len = length list
-        idx = seed `mod` len
-        shuffledList = shuffle seed len list
-        h = list !! (len-idx-1)
-    in chunksOf boardEdgeLength (replaceNth h (Just player) concatenatedBoard)
+predefinedMove :: Board -> Int -> Board
+predefinedMove board moveNumber =
+    case moveNumber of
+        0 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 1 + 2) (Just X) (concat board))
+        1 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 1 + 1) (Just O) (concat board))
+        2 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 2 + 2) (Just X) (concat board))
+        3 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 1 + 0) (Just O) (concat board))
+        4 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 0 + 1) (Just X) (concat board))
+        5 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 0 + 2) (Just O) (concat board))
+        6 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 2 + 1) (Just X) (concat board))
+        7 -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 0 + 0) (Just O) (concat board))
+        _ -> chunksOf boardEdgeLength (replaceNth (boardEdgeLength * 2 + 0) (Just X) (concat board))
