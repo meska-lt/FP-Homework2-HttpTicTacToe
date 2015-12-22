@@ -61,7 +61,7 @@ getMapElem [] = Nothing
 getMapElem str =
     let 
         key = takeWhile (/= ')') str ++ ")"
-        rest = drop (length key + 2) str
+        rest = drop (length key + 1) str
     in Just (key, rest)
 
 parseList :: String -> [String] -> [String]
@@ -84,7 +84,7 @@ parseMaps (head:tail) acc =
 parseSExpr :: String -> [InternalMap]
 parseSExpr str =
     let
-        listContent = trimElem str "(m " ")" "Not a map."
+        listContent = trimElem str "(l " ")" "Not a list."
         parsedData = parseMaps (parseList listContent []) []
     in parsedData
 
@@ -122,14 +122,14 @@ serializeMapContents (head:tail)  moveId moveNumber serializedPart =
     if head /= Nothing then let
         yVal = moveNumber `mod` boardEdgeLength
         xVal = (moveNumber - yVal) `div` boardEdgeLength
-        str = "\"" ++ (show  moveId) ++ "\" " ++ "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr head) ++ "\")"
+        str = "(m \"x\" " ++ (show xVal) ++ " \"y\" " ++ (show yVal) ++ " \"v\" \"" ++ (playerToStr head) ++ "\")"
     in serializeMapContents tail (moveId + 1) (moveNumber + 1) (str:serializedPart)
     else serializeMapContents tail (moveId) (moveNumber + 1) serializedPart
 
 serializeBoard :: [Maybe Player] -> String
 serializeBoard board =
   let listContent = intercalate " " (reverse $ serializeMapContents board 0 0 [])
-  in "(m " ++ listContent ++ ")"
+  in "(l " ++ listContent ++ ")"
 
 predefinedMove :: Board -> Int -> Board
 predefinedMove board moveNumber =

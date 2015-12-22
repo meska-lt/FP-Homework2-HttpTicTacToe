@@ -44,7 +44,7 @@ postRequestWithIdAndState :: String -> String -> Request String
 postRequestWithIdAndState gameId gameState = Request {
   rqURI = (updateUriWithGameId gameId) :: URI,
   rqMethod = POST :: RequestMethod,
-  rqHeaders = [Header HdrContentType "application/s-expr+map", Header HdrContentLength (show (length gameState) :: String)] :: [Header],
+  rqHeaders = [Header HdrContentType "application/s-expr+list", Header HdrContentLength (show (length gameState) :: String)] :: [Header],
   rqBody = gameState
 }
 
@@ -52,7 +52,7 @@ getRequestWithIdAndState :: String -> String -> Request String
 getRequestWithIdAndState gameId gameState = Request {
   rqURI = (updateUriWithGameId gameId) :: URI,
   rqMethod = GET :: RequestMethod,
-  rqHeaders = [Header HdrAccept "application/s-expr+map"] :: [Header],
+  rqHeaders = [Header HdrAccept "application/s-expr+list"] :: [Header],
   rqBody = ""
 }
 
